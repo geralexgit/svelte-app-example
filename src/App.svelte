@@ -1,11 +1,7 @@
 <script>
-	let name = 'yo';
+  // import Flat from "svelte-ui";
+  import MainContainer from "./containers/MainContainer.svelte";
+  import "svelte-ui-theme/index.css";
 </script>
 
-<style>
-	h1 {
-		color: purple;
-	}
-</style>
-
-<h1>Hello {name}!</h1>
+<MainContainer />
