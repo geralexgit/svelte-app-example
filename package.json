@@ -23,5 +23,7 @@
     "start": "sirv public",
     "start:dev": "sirv public --dev"
   },
-  "dependencies": {}
+  "dependencies": {
+    "validator": "^11.0.0"
+  }
 }

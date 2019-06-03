@@ -34,6 +34,12 @@ var app = (function () {
     function detach(node) {
         node.parentNode.removeChild(node);
     }
+    function destroy_each(iterations, detaching) {
+        for (let i = 0; i < iterations.length; i += 1) {
+            if (iterations[i])
+                iterations[i].d(detaching);
+        }
+    }
     function element(name) {
         return document.createElement(name);
     }
@@ -262,12 +268,558 @@ var app = (function () {
         }
     }
 
+    function unwrapExports (x) {
+    	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+    }
+
+    function createCommonjsModule(fn, module) {
+    	return module = { exports: {} }, fn(module, module.exports), module.exports;
+    }
+
+    var assertString_1 = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.default = assertString;
+
+    function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+    function assertString(input) {
+      var isString = typeof input === 'string' || input instanceof String;
+
+      if (!isString) {
+        var invalidType;
+
+        if (input === null) {
+          invalidType = 'null';
+        } else {
+          invalidType = _typeof(input);
+
+          if (invalidType === 'object' && input.constructor && input.constructor.hasOwnProperty('name')) {
+            invalidType = input.constructor.name;
+          } else {
+            invalidType = "a ".concat(invalidType);
+          }
+        }
+
+        throw new TypeError("Expected string but received ".concat(invalidType, "."));
+      }
+    }
+
+    module.exports = exports.default;
+    module.exports.default = exports.default;
+    });
+
+    unwrapExports(assertString_1);
+
+    var merge_1 = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.default = merge;
+
+    function merge() {
+      var obj = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var defaults = arguments.length > 1 ? arguments[1] : undefined;
+
+      for (var key in defaults) {
+        if (typeof obj[key] === 'undefined') {
+          obj[key] = defaults[key];
+        }
+      }
+
+      return obj;
+    }
+
+    module.exports = exports.default;
+    module.exports.default = exports.default;
+    });
+
+    unwrapExports(merge_1);
+
+    var isByteLength_1 = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.default = isByteLength;
+
+    var _assertString = _interopRequireDefault(assertString_1);
+
+    function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+    function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+    /* eslint-disable prefer-rest-params */
+    function isByteLength(str, options) {
+      (0, _assertString.default)(str);
+      var min;
+      var max;
+
+      if (_typeof(options) === 'object') {
+        min = options.min || 0;
+        max = options.max;
+      } else {
+        // backwards compatibility: isByteLength(str, min [, max])
+        min = arguments[1];
+        max = arguments[2];
+      }
+
+      var len = encodeURI(str).split(/%..|./).length - 1;
+      return len >= min && (typeof max === 'undefined' || len <= max);
+    }
+
+    module.exports = exports.default;
+    module.exports.default = exports.default;
+    });
+
+    unwrapExports(isByteLength_1);
+
+    var isFQDN_1 = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.default = isFQDN;
+
+    var _assertString = _interopRequireDefault(assertString_1);
+
+    var _merge = _interopRequireDefault(merge_1);
+
+    function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+    var default_fqdn_options = {
+      require_tld: true,
+      allow_underscores: false,
+      allow_trailing_dot: false
+    };
+
+    function isFQDN(str, options) {
+      (0, _assertString.default)(str);
+      options = (0, _merge.default)(options, default_fqdn_options);
+      /* Remove the optional trailing dot before checking validity */
+
+      if (options.allow_trailing_dot && str[str.length - 1] === '.') {
+        str = str.substring(0, str.length - 1);
+      }
+
+      var parts = str.split('.');
+
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].length > 63) {
+          return false;
+        }
+      }
+
+      if (options.require_tld) {
+        var tld = parts.pop();
+
+        if (!parts.length || !/^([a-z\u00a1-\uffff]{2,}|xn[a-z0-9-]{2,})$/i.test(tld)) {
+          return false;
+        } // disallow spaces
+
+
+        if (/[\s\u2002-\u200B\u202F\u205F\u3000\uFEFF\uDB40\uDC20]/.test(tld)) {
+          return false;
+        }
+      }
+
+      for (var part, _i = 0; _i < parts.length; _i++) {
+        part = parts[_i];
+
+        if (options.allow_underscores) {
+          part = part.replace(/_/g, '');
+        }
+
+        if (!/^[a-z\u00a1-\uffff0-9-]+$/i.test(part)) {
+          return false;
+        } // disallow full-width chars
+
+
+        if (/[\uff01-\uff5e]/.test(part)) {
+          return false;
+        }
+
+        if (part[0] === '-' || part[part.length - 1] === '-') {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    module.exports = exports.default;
+    module.exports.default = exports.default;
+    });
+
+    unwrapExports(isFQDN_1);
+
+    var isIP_1 = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.default = isIP;
+
+    var _assertString = _interopRequireDefault(assertString_1);
+
+    function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+    var ipv4Maybe = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    var ipv6Block = /^[0-9A-F]{1,4}$/i;
+
+    function isIP(str) {
+      var version = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+      (0, _assertString.default)(str);
+      version = String(version);
+
+      if (!version) {
+        return isIP(str, 4) || isIP(str, 6);
+      } else if (version === '4') {
+        if (!ipv4Maybe.test(str)) {
+          return false;
+        }
+
+        var parts = str.split('.').sort(function (a, b) {
+          return a - b;
+        });
+        return parts[3] <= 255;
+      } else if (version === '6') {
+        var blocks = str.split(':');
+        var foundOmissionBlock = false; // marker to indicate ::
+        // At least some OS accept the last 32 bits of an IPv6 address
+        // (i.e. 2 of the blocks) in IPv4 notation, and RFC 3493 says
+        // that '::ffff:a.b.c.d' is valid for IPv4-mapped IPv6 addresses,
+        // and '::a.b.c.d' is deprecated, but also valid.
+
+        var foundIPv4TransitionBlock = isIP(blocks[blocks.length - 1], 4);
+        var expectedNumberOfBlocks = foundIPv4TransitionBlock ? 7 : 8;
+
+        if (blocks.length > expectedNumberOfBlocks) {
+          return false;
+        } // initial or final ::
+
+
+        if (str === '::') {
+          return true;
+        } else if (str.substr(0, 2) === '::') {
+          blocks.shift();
+          blocks.shift();
+          foundOmissionBlock = true;
+        } else if (str.substr(str.length - 2) === '::') {
+          blocks.pop();
+          blocks.pop();
+          foundOmissionBlock = true;
+        }
+
+        for (var i = 0; i < blocks.length; ++i) {
+          // test for a :: which can not be at the string start/end
+          // since those cases have been handled above
+          if (blocks[i] === '' && i > 0 && i < blocks.length - 1) {
+            if (foundOmissionBlock) {
+              return false; // multiple :: in address
+            }
+
+            foundOmissionBlock = true;
+          } else if (foundIPv4TransitionBlock && i === blocks.length - 1) ; else if (!ipv6Block.test(blocks[i])) {
+            return false;
+          }
+        }
+
+        if (foundOmissionBlock) {
+          return blocks.length >= 1;
+        }
+
+        return blocks.length === expectedNumberOfBlocks;
+      }
+
+      return false;
+    }
+
+    module.exports = exports.default;
+    module.exports.default = exports.default;
+    });
+
+    unwrapExports(isIP_1);
+
+    var isEmail_1 = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.default = isEmail;
+
+    var _assertString = _interopRequireDefault(assertString_1);
+
+    var _merge = _interopRequireDefault(merge_1);
+
+    var _isByteLength = _interopRequireDefault(isByteLength_1);
+
+    var _isFQDN = _interopRequireDefault(isFQDN_1);
+
+    var _isIP = _interopRequireDefault(isIP_1);
+
+    function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+    function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+    function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+    function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+    function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+    var default_email_options = {
+      allow_display_name: false,
+      require_display_name: false,
+      allow_utf8_local_part: true,
+      require_tld: true
+    };
+    /* eslint-disable max-len */
+
+    /* eslint-disable no-control-regex */
+
+    var splitNameAddress = /^([^\x00-\x1F\x7F-\x9F\cX]+)<(.+)>$/i;
+    var emailUserPart = /^[a-z\d!#\$%&'\*\+\-\/=\?\^_`{\|}~]+$/i;
+    var gmailUserPart = /^[a-z\d]+$/;
+    var quotedEmailUser = /^([\s\x01-\x08\x0b\x0c\x0e-\x1f\x7f\x21\x23-\x5b\x5d-\x7e]|(\\[\x01-\x09\x0b\x0c\x0d-\x7f]))*$/i;
+    var emailUserUtf8Part = /^[a-z\d!#\$%&'\*\+\-\/=\?\^_`{\|}~\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+$/i;
+    var quotedEmailUserUtf8 = /^([\s\x01-\x08\x0b\x0c\x0e-\x1f\x7f\x21\x23-\x5b\x5d-\x7e\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]|(\\[\x01-\x09\x0b\x0c\x0d-\x7f\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))*$/i;
+    var defaultMaxEmailLength = 254;
+    /* eslint-enable max-len */
+
+    /* eslint-enable no-control-regex */
+
+    /**
+     * Validate display name according to the RFC2822: https://tools.ietf.org/html/rfc2822#appendix-A.1.2
+     * @param {String} display_name
+     */
+
+    function validateDisplayName(display_name) {
+      var trim_quotes = display_name.match(/^"(.+)"$/i);
+      var display_name_without_quotes = trim_quotes ? trim_quotes[1] : display_name; // display name with only spaces is not valid
+
+      if (!display_name_without_quotes.trim()) {
+        return false;
+      } // check whether display name contains illegal character
+
+
+      var contains_illegal = /[\.";<>]/.test(display_name_without_quotes);
+
+      if (contains_illegal) {
+        // if contains illegal characters,
+        // must to be enclosed in double-quotes, otherwise it's not a valid display name
+        if (!trim_quotes) {
+          return false;
+        } // the quotes in display name must start with character symbol \
+
+
+        var all_start_with_back_slash = display_name_without_quotes.split('"').length === display_name_without_quotes.split('\\"').length;
+
+        if (!all_start_with_back_slash) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    function isEmail(str, options) {
+      (0, _assertString.default)(str);
+      options = (0, _merge.default)(options, default_email_options);
+
+      if (options.require_display_name || options.allow_display_name) {
+        var display_email = str.match(splitNameAddress);
+
+        if (display_email) {
+          var display_name;
+
+          var _display_email = _slicedToArray(display_email, 3);
+
+          display_name = _display_email[1];
+          str = _display_email[2];
+
+          // sometimes need to trim the last space to get the display name
+          // because there may be a space between display name and email address
+          // eg. myname <address@gmail.com>
+          // the display name is `myname` instead of `myname `, so need to trim the last space
+          if (display_name.endsWith(' ')) {
+            display_name = display_name.substr(0, display_name.length - 1);
+          }
+
+          if (!validateDisplayName(display_name)) {
+            return false;
+          }
+        } else if (options.require_display_name) {
+          return false;
+        }
+      }
+
+      if (!options.ignore_max_length && str.length > defaultMaxEmailLength) {
+        return false;
+      }
+
+      var parts = str.split('@');
+      var domain = parts.pop();
+      var user = parts.join('@');
+      var lower_domain = domain.toLowerCase();
+
+      if (options.domain_specific_validation && (lower_domain === 'gmail.com' || lower_domain === 'googlemail.com')) {
+        /*
+          Previously we removed dots for gmail addresses before validating.
+          This was removed because it allows `multiple..dots@gmail.com`
+          to be reported as valid, but it is not.
+          Gmail only normalizes single dots, removing them from here is pointless,
+          should be done in normalizeEmail
+        */
+        user = user.toLowerCase(); // Removing sub-address from username before gmail validation
+
+        var username = user.split('+')[0]; // Dots are not included in gmail length restriction
+
+        if (!(0, _isByteLength.default)(username.replace('.', ''), {
+          min: 6,
+          max: 30
+        })) {
+          return false;
+        }
+
+        var _user_parts = username.split('.');
+
+        for (var i = 0; i < _user_parts.length; i++) {
+          if (!gmailUserPart.test(_user_parts[i])) {
+            return false;
+          }
+        }
+      }
+
+      if (!(0, _isByteLength.default)(user, {
+        max: 64
+      }) || !(0, _isByteLength.default)(domain, {
+        max: 254
+      })) {
+        return false;
+      }
+
+      if (!(0, _isFQDN.default)(domain, {
+        require_tld: options.require_tld
+      })) {
+        if (!options.allow_ip_domain) {
+          return false;
+        }
+
+        if (!(0, _isIP.default)(domain)) {
+          if (!domain.startsWith('[') || !domain.endsWith(']')) {
+            return false;
+          }
+
+          var noBracketdomain = domain.substr(1, domain.length - 2);
+
+          if (noBracketdomain.length === 0 || !(0, _isIP.default)(noBracketdomain)) {
+            return false;
+          }
+        }
+      }
+
+      if (user[0] === '"') {
+        user = user.slice(1, user.length - 1);
+        return options.allow_utf8_local_part ? quotedEmailUserUtf8.test(user) : quotedEmailUser.test(user);
+      }
+
+      var pattern = options.allow_utf8_local_part ? emailUserUtf8Part : emailUserPart;
+      var user_parts = user.split('.');
+
+      for (var _i2 = 0; _i2 < user_parts.length; _i2++) {
+        if (!pattern.test(user_parts[_i2])) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    module.exports = exports.default;
+    module.exports.default = exports.default;
+    });
+
+    var isEmail = unwrapExports(isEmail_1);
+
     /* src/components/LoginForm.svelte generated by Svelte v3.4.4 */
 
     const file = "src/components/LoginForm.svelte";
 
+    function get_each_context(ctx, list, i) {
+    	const child_ctx = Object.create(ctx);
+    	child_ctx.question = list[i];
+    	return child_ctx;
+    }
+
+    // (36:2) {#if !isValidEmail && touched}
+    function create_if_block(ctx) {
+    	var p;
+
+    	return {
+    		c: function create() {
+    			p = element("p");
+    			p.textContent = "Email is invalid";
+    			add_location(p, file, 36, 4, 989);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, p, anchor);
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(p);
+    			}
+    		}
+    	};
+    }
+
+    // (44:4) {#each questions as question}
+    function create_each_block(ctx) {
+    	var option, t_value = ctx.question.text, t, option_value_value;
+
+    	return {
+    		c: function create() {
+    			option = element("option");
+    			t = text(t_value);
+    			option.__value = option_value_value = ctx.question;
+    			option.value = option.__value;
+    			add_location(option, file, 44, 6, 1243);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, option, anchor);
+    			append(option, t);
+    		},
+
+    		p: function update(changed, ctx) {
+    			option.value = option.__value;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(option);
+    			}
+    		}
+    	};
+    }
+
     function create_fragment(ctx) {
-    	var h1, t1, form, input0, t2, input1, t3, input2, t4, t5, t6, select, option0, option1, t9, button, dispose;
+    	var h1, t1, form, input0, t2, input1, t3, input2, t4, t5, label, input3, t6, t7, t8, select, t9, button, dispose;
+
+    	var if_block = (!ctx.isValidEmail && ctx.touched) && create_if_block(ctx);
+
+    	var each_value = ctx.questions;
+
+    	var each_blocks = [];
+
+    	for (var i = 0; i < each_value.length; i += 1) {
+    		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+    	}
 
     	return {
     		c: function create() {
@@ -280,43 +832,51 @@ var app = (function () {
     			input1 = element("input");
     			t3 = space();
     			input2 = element("input");
-    			t4 = text("\n  Save: ");
-    			t5 = text(ctx.save);
-    			t6 = space();
+    			t4 = space();
+    			if (if_block) if_block.c();
+    			t5 = space();
+    			label = element("label");
+    			input3 = element("input");
+    			t6 = text("\n    Save: ");
+    			t7 = text(ctx.save);
+    			t8 = space();
     			select = element("select");
-    			option0 = element("option");
-    			option0.textContent = "👦";
-    			option1 = element("option");
-    			option1.textContent = "👧";
+
+    			for (var i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
     			t9 = space();
     			button = element("button");
     			button.textContent = "go!";
-    			add_location(h1, file, 13, 0, 222);
+    			add_location(h1, file, 29, 0, 684);
     			input0.placeholder = "login";
     			attr(input0, "type", "text");
-    			add_location(input0, file, 15, 2, 291);
+    			add_location(input0, file, 31, 2, 753);
     			input1.placeholder = "password";
     			attr(input1, "type", "password");
-    			add_location(input1, file, 16, 2, 354);
-    			attr(input2, "type", "checkbox");
-    			add_location(input2, file, 17, 2, 427);
-    			option0.__value = "male";
-    			option0.value = option0.__value;
-    			add_location(option0, file, 20, 4, 520);
-    			option1.__value = "female";
-    			option1.value = option1.__value;
-    			add_location(option1, file, 21, 4, 557);
-    			if (ctx.sex === void 0) add_render_callback(() => ctx.select_change_handler.call(select));
-    			add_location(select, file, 19, 2, 490);
+    			add_location(input1, file, 32, 2, 816);
+    			input2.placeholder = "email";
+    			attr(input2, "type", "email");
+    			add_location(input2, file, 34, 2, 890);
+    			input3.id = "save";
+    			attr(input3, "type", "checkbox");
+    			add_location(input3, file, 39, 4, 1046);
+    			label.htmlFor = "save";
+    			add_location(label, file, 38, 2, 1023);
+    			if (ctx.selected === void 0) add_render_callback(() => ctx.select_change_handler.call(select));
+    			add_location(select, file, 42, 2, 1132);
     			button.type = "submit";
-    			add_location(button, file, 23, 2, 606);
-    			add_location(form, file, 14, 0, 242);
+    			add_location(button, file, 47, 2, 1321);
+    			add_location(form, file, 30, 0, 704);
 
     			dispose = [
     				listen(input0, "input", ctx.input0_input_handler),
     				listen(input1, "input", ctx.input1_input_handler),
-    				listen(input2, "change", ctx.input2_change_handler),
+    				listen(input2, "input", ctx.input2_input_handler),
+    				listen(input3, "change", ctx.input3_change_handler),
     				listen(select, "change", ctx.select_change_handler),
+    				listen(select, "change", ctx.change_handler),
     				listen(form, "submit", prevent_default(ctx.loginHandler))
     			];
     		},
@@ -341,16 +901,26 @@ var app = (function () {
     			append(form, t3);
     			append(form, input2);
 
-    			input2.checked = ctx.save;
+    			input2.value = ctx.email;
 
     			append(form, t4);
+    			if (if_block) if_block.m(form, null);
     			append(form, t5);
-    			append(form, t6);
-    			append(form, select);
-    			append(select, option0);
-    			append(select, option1);
+    			append(form, label);
+    			append(label, input3);
 
-    			select_option(select, ctx.sex);
+    			input3.checked = ctx.save;
+
+    			append(label, t6);
+    			append(label, t7);
+    			append(form, t8);
+    			append(form, select);
+
+    			for (var i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].m(select, null);
+    			}
+
+    			select_option(select, ctx.selected);
 
     			append(form, t9);
     			append(form, button);
@@ -359,13 +929,47 @@ var app = (function () {
     		p: function update(changed, ctx) {
     			if (changed.login && (input0.value !== ctx.login)) input0.value = ctx.login;
     			if (changed.password) input1.value = ctx.password;
-    			if (changed.save) input2.checked = ctx.save;
+    			if (changed.email) input2.value = ctx.email;
 
-    			if (changed.save) {
-    				set_data(t5, ctx.save);
+    			if (!ctx.isValidEmail && ctx.touched) {
+    				if (!if_block) {
+    					if_block = create_if_block(ctx);
+    					if_block.c();
+    					if_block.m(form, t5);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
     			}
 
-    			if (changed.sex) select_option(select, ctx.sex);
+    			if (changed.save) input3.checked = ctx.save;
+
+    			if (changed.save) {
+    				set_data(t7, ctx.save);
+    			}
+
+    			if (changed.questions) {
+    				each_value = ctx.questions;
+
+    				for (var i = 0; i < each_value.length; i += 1) {
+    					const child_ctx = get_each_context(ctx, each_value, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(changed, child_ctx);
+    					} else {
+    						each_blocks[i] = create_each_block(child_ctx);
+    						each_blocks[i].c();
+    						each_blocks[i].m(select, null);
+    					}
+    				}
+
+    				for (; i < each_blocks.length; i += 1) {
+    					each_blocks[i].d(1);
+    				}
+    				each_blocks.length = each_value.length;
+    			}
+
+    			if (changed.selected) select_option(select, ctx.selected);
     		},
 
     		i: noop,
@@ -378,21 +982,38 @@ var app = (function () {
     				detach(form);
     			}
 
+    			if (if_block) if_block.d();
+
+    			destroy_each(each_blocks, detaching);
+
     			run_all(dispose);
     		}
     	};
     }
 
+    let sex = "female";
+
     function instance($$self, $$props, $$invalidate) {
     	let login = "User";
       let password = "Password";
+      let email = "";
       let save = false;
-      let sex = "sex";
+      let selected = {};
+      let touched = false;
 
-      const userData = { login, password, save, sex };
+      let questions = [
+        { id: 1, text: `Where did you go to school?` },
+        { id: 2, text: `What is your mother's name?` },
+        {
+          id: 3,
+          text: `What is another personal fact that an attacker could easily find with Google?`
+        }
+      ];
 
       function loginHandler() {
-        console.log(userData);
+        $$invalidate('touched', touched = true);
+        let userData = { login, password, save, selected: selected.id, sex };
+        console.log(userData, touched, isValidEmail);
       }
 
     	function input0_input_handler() {
@@ -405,26 +1026,49 @@ var app = (function () {
     		$$invalidate('password', password);
     	}
 
-    	function input2_change_handler() {
+    	function input2_input_handler() {
+    		email = this.value;
+    		$$invalidate('email', email);
+    	}
+
+    	function input3_change_handler() {
     		save = this.checked;
     		$$invalidate('save', save);
     	}
 
     	function select_change_handler() {
-    		sex = select_value(this);
-    		$$invalidate('sex', sex);
+    		selected = select_value(this);
+    		$$invalidate('selected', selected);
+    		$$invalidate('questions', questions);
     	}
+
+    	function change_handler() {
+    		return console.log(selected);
+    	}
+
+    	let isValidEmail;
+
+    	$$self.$$.update = ($$dirty = { email: 1 }) => {
+    		if ($$dirty.email) { $$invalidate('isValidEmail', isValidEmail = isEmail(email)); }
+    	};
 
     	return {
     		login,
     		password,
+    		email,
     		save,
-    		sex,
+    		selected,
+    		touched,
+    		questions,
     		loginHandler,
+    		isValidEmail,
+    		console,
     		input0_input_handler,
     		input1_input_handler,
-    		input2_change_handler,
-    		select_change_handler
+    		input2_input_handler,
+    		input3_change_handler,
+    		select_change_handler,
+    		change_handler
     	};
     }
 
