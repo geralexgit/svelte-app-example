@@ -24,6 +24,17 @@ var app = (function () {
     function safe_not_equal(a, b) {
         return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
     }
+    function validate_store(store, name) {
+        if (!store || typeof store.subscribe !== 'function') {
+            throw new Error(`'${name}' is not a store with a 'subscribe' method`);
+        }
+    }
+    function subscribe(component, store, callback) {
+        const unsub = store.subscribe(callback);
+        component.$$.on_destroy.push(unsub.unsubscribe
+            ? () => unsub.unsubscribe()
+            : unsub);
+    }
 
     function append(target, node) {
         target.appendChild(node);
@@ -68,6 +79,11 @@ var app = (function () {
     }
     function children(element) {
         return Array.from(element.childNodes);
+    }
+    function set_data(text, data) {
+        data = '' + data;
+        if (text.data !== data)
+            text.data = data;
     }
     function select_option(select, value) {
         for (let i = 0; i < select.options.length; i += 1) {
@@ -262,6 +278,157 @@ var app = (function () {
             };
         }
     }
+
+    /**
+     * Initialize new store and apply all modules to the store.
+     *
+     * @param {moduleInitializer[]} modules Functions which will set initial state
+     *                                      define reducer and subscribe
+     *                                      to all system events.
+     *
+     * @return {Store} The new store.
+     *
+     * @example
+     * import createStore from 'storeon'
+     * let increment = store => {
+     *   store.on('@init', () => ({ count: 0 }))
+     *   store.on('inc', ({ count }) => ({ count: count + 1 }))
+     * }
+     * const store = createStore([increment])
+     * store.get().count //=> 0
+     * store.dispatch('inc')
+     * store.get().count //=> 1
+     */
+    var createStore = function (modules) {
+      var events = { };
+      var state = { };
+
+      var on = function (event, cb) {
+        (events[event] || (events[event] = [])).push(cb);
+
+        return function () {
+          events[event] = events[event].filter(function (i) {
+            return i !== cb
+          });
+        }
+      };
+
+      var dispatch = function (event, data) {
+        if (event !== '@dispatch') {
+          dispatch('@dispatch', [event, data, events[event]]);
+        }
+
+        if (events[event]) {
+          var changes = { };
+          var changed;
+          events[event].forEach(function (i) {
+            var diff = i(state, data);
+            if (diff && typeof diff.then !== 'function') {
+              changed = Object.assign({ }, state, diff);
+              Object.assign(changes, diff);
+              state = changed;
+            }
+          });
+          if (changed) dispatch('@changed', changes);
+        }
+      };
+
+      var get = function () {
+        return state
+      };
+
+      var store = { dispatch: dispatch, get: get, on: on };
+
+      modules.forEach(function (i) {
+        if (i) i(store);
+      });
+      dispatch('@init');
+
+      return store
+    };
+
+    var storeon = createStore;
+
+    /**
+     * Initialize new store and apply all modules to the store for Svelte app.
+     *
+     * @param {modules[]} modules Functions which will set initial state
+     *                            define reducer and subscribe
+     *                            to all system events
+     *
+     * @return {connect} The store connector.
+     *
+     * @example
+     * import { createSvelteStore } from "@storeon/svelte";
+     *
+     * let counter = store => {
+     *  store.on("@init", () => ({ count: 0 }));
+     *  store.on("inc", ({ count }) => ({ count: count + 1 }));
+     * };
+     * export const connect = createSvelteStore([counter]);
+     */
+    function createSvelteStore (modules) {
+      var store = storeon(modules);
+
+      /**
+       * Hook-like function to use Storeon in Svelte app
+       *
+       * @param {string} key Key of state field
+       *
+       */
+      return function (key) {
+        var subscribers = [];
+
+        /**
+         * Subscription for the state
+         *
+         * @param {function} run Callback function
+         *
+         */
+        function subscribe (run) {
+          var state = store.get();
+
+          subscribers.push(run);
+          run(state[key]);
+
+          return function () {
+            subscribers = subscribers.filter(function (i) {
+              return i !== run
+            });
+          }
+        }
+
+        store.on('@changed', function (_, changed) {
+          if (key in changed) {
+            subscribers.forEach(function (s) {
+              s(changed[key]);
+            });
+          }
+        });
+
+        var changes = {
+          subscribe: subscribe
+        };
+
+        return [store.dispatch, changes]
+      }
+    }
+
+    var svelte = { createSvelteStore: createSvelteStore };
+    var svelte_1 = svelte.createSvelteStore;
+
+    let counter = store => {
+      store.on('@init', () => ({
+        count: 0
+      }));
+      store.on('inc', ({
+        count
+      }) => ({
+        count: count + 1
+      }));
+    };
+
+    const connect = svelte_1([counter]);
 
     function unwrapExports (x) {
     	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
@@ -750,7 +917,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (52:4) {#if !isValidEmail && touched}
+    // (57:4) {#if !isValidEmail && touched}
     function create_if_block(ctx) {
     	var span;
 
@@ -759,7 +926,7 @@ var app = (function () {
     			span = element("span");
     			span.textContent = "Email is invalid";
     			span.className = "inputError svelte-1ol1brq";
-    			add_location(span, file, 52, 6, 1242);
+    			add_location(span, file, 57, 6, 1377);
     		},
 
     		m: function mount(target, anchor) {
@@ -774,7 +941,7 @@ var app = (function () {
     	};
     }
 
-    // (60:6) {#each questions as question}
+    // (65:6) {#each questions as question}
     function create_each_block(ctx) {
     	var option, t_value = ctx.question.text, t, option_value_value;
 
@@ -784,7 +951,7 @@ var app = (function () {
     			t = text(t_value);
     			option.__value = option_value_value = ctx.question;
     			option.value = option.__value;
-    			add_location(option, file, 60, 8, 1559);
+    			add_location(option, file, 65, 8, 1694);
     		},
 
     		m: function mount(target, anchor) {
@@ -805,7 +972,7 @@ var app = (function () {
     }
 
     function create_fragment(ctx) {
-    	var form, div, h1, t1, input0, t2, input1, t3, input2, t4, t5, label, input3, t6, t7, select, t8, input4, t9, button, dispose;
+    	var form, div, h10, t1, input0, t2, input1, t3, input2, t4, t5, label, input3, t6, t7, select, t8, input4, t9, button0, t11, h11, t12, t13, t14, button1, dispose;
 
     	var if_block = (!ctx.isValidEmail && ctx.touched) && create_if_block(ctx);
 
@@ -821,8 +988,8 @@ var app = (function () {
     		c: function create() {
     			form = element("form");
     			div = element("div");
-    			h1 = element("h1");
-    			h1.textContent = "Sign Up form";
+    			h10 = element("h1");
+    			h10.textContent = "Sign Up form";
     			t1 = space();
     			input0 = element("input");
     			t2 = space();
@@ -845,33 +1012,42 @@ var app = (function () {
     			t8 = space();
     			input4 = element("input");
     			t9 = space();
-    			button = element("button");
-    			button.textContent = "go!";
-    			add_location(h1, file, 46, 4, 972);
+    			button0 = element("button");
+    			button0.textContent = "go!";
+    			t11 = space();
+    			h11 = element("h1");
+    			t12 = text("The count is ");
+    			t13 = text(ctx.$count);
+    			t14 = space();
+    			button1 = element("button");
+    			button1.textContent = "+";
+    			add_location(h10, file, 52, 4, 1108);
     			input0.placeholder = "login";
     			attr(input0, "type", "text");
-    			add_location(input0, file, 47, 4, 998);
+    			add_location(input0, file, 53, 4, 1134);
     			input1.placeholder = "password";
     			attr(input1, "type", "password");
-    			add_location(input1, file, 48, 4, 1063);
+    			add_location(input1, file, 54, 4, 1199);
     			input2.placeholder = "email";
     			attr(input2, "type", "email");
-    			add_location(input2, file, 50, 4, 1139);
+    			add_location(input2, file, 55, 4, 1274);
     			input3.id = "agree";
     			attr(input3, "type", "checkbox");
-    			add_location(input3, file, 55, 6, 1331);
+    			add_location(input3, file, 60, 6, 1466);
     			label.htmlFor = "agree";
-    			add_location(label, file, 54, 4, 1305);
+    			add_location(label, file, 59, 4, 1440);
     			if (ctx.selected === void 0) add_render_callback(() => ctx.select_change_handler.call(select));
-    			add_location(select, file, 58, 4, 1444);
+    			add_location(select, file, 63, 4, 1579);
     			input4.placeholder = "Your answer";
     			attr(input4, "type", "text");
-    			add_location(input4, file, 63, 4, 1643);
-    			button.type = "submit";
-    			add_location(button, file, 64, 4, 1715);
+    			add_location(input4, file, 68, 4, 1778);
+    			button0.type = "submit";
+    			add_location(button0, file, 69, 4, 1850);
     			div.className = "formWrapper svelte-1ol1brq";
-    			add_location(div, file, 45, 2, 942);
-    			add_location(form, file, 44, 0, 893);
+    			add_location(div, file, 51, 2, 1078);
+    			add_location(form, file, 50, 0, 1029);
+    			add_location(h11, file, 72, 0, 1902);
+    			add_location(button1, file, 73, 0, 1933);
 
     			dispose = [
     				listen(input0, "input", ctx.input0_input_handler),
@@ -881,7 +1057,8 @@ var app = (function () {
     				listen(select, "change", ctx.select_change_handler),
     				listen(select, "change", ctx.change_handler),
     				listen(input4, "input", ctx.input4_input_handler),
-    				listen(form, "submit", prevent_default(ctx.loginHandler))
+    				listen(form, "submit", prevent_default(ctx.loginHandler)),
+    				listen(button1, "click", ctx.increment)
     			];
     		},
 
@@ -892,7 +1069,7 @@ var app = (function () {
     		m: function mount(target, anchor) {
     			insert(target, form, anchor);
     			append(form, div);
-    			append(div, h1);
+    			append(div, h10);
     			append(div, t1);
     			append(div, input0);
 
@@ -932,7 +1109,13 @@ var app = (function () {
     			input4.value = ctx.answer;
 
     			append(div, t9);
-    			append(div, button);
+    			append(div, button0);
+    			insert(target, t11, anchor);
+    			insert(target, h11, anchor);
+    			append(h11, t12);
+    			append(h11, t13);
+    			insert(target, t14, anchor);
+    			insert(target, button1, anchor);
     		},
 
     		p: function update(changed, ctx) {
@@ -976,6 +1159,10 @@ var app = (function () {
 
     			if (changed.selected) select_option(select, ctx.selected);
     			if (changed.answer && (input4.value !== ctx.answer)) input4.value = ctx.answer;
+
+    			if (changed.$count) {
+    				set_data(t13, ctx.$count);
+    			}
     		},
 
     		i: noop,
@@ -990,6 +1177,13 @@ var app = (function () {
 
     			destroy_each(each_blocks, detaching);
 
+    			if (detaching) {
+    				detach(t11);
+    				detach(h11);
+    				detach(t14);
+    				detach(button1);
+    			}
+
     			run_all(dispose);
     		}
     	};
@@ -998,7 +1192,11 @@ var app = (function () {
     let sex = "female";
 
     function instance($$self, $$props, $$invalidate) {
-    	let login = "User";
+    	let $count;
+
+    	
+
+      let login = "User";
       let password = "Password";
       let email = "";
       let agree = false;
@@ -1014,6 +1212,12 @@ var app = (function () {
           text: `What is another personal fact that an attacker could easily find with Google?`
         }
       ];
+
+      const [dispatch, count] = connect("count"); validate_store(count, 'count'); subscribe($$self, count, $$value => { $count = $$value; $$invalidate('$count', $count); });
+
+      function increment() {
+        dispatch("inc");
+      }
 
       function loginHandler() {
         $$invalidate('touched', touched = true);
@@ -1071,9 +1275,12 @@ var app = (function () {
     		answer,
     		touched,
     		questions,
+    		count,
+    		increment,
     		loginHandler,
     		isValidEmail,
     		console,
+    		$count,
     		input0_input_handler,
     		input1_input_handler,
     		input2_input_handler,

@@ -24,6 +24,7 @@
     "start:dev": "sirv public --dev"
   },
   "dependencies": {
+    "@storeon/svelte": "^0.2.1",
     "validator": "^11.0.0"
   }
 }

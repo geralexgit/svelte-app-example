@@ -640,6 +640,13 @@
   resolved "https://registry.yarnpkg.com/@polka/url/-/url-0.5.0.tgz#b21510597fd601e5d7c95008b76bf0d254ebfd31"
   integrity sha512-oZLYFEAzUKyi3SKnXvj32ZCEGH6RDnao7COuCVhDydMS9NrCSVXhM79VaKyP5+Zc33m0QXEd2DN3UkU7OsHcfw==
 
+"@storeon/svelte@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@storeon/svelte/-/svelte-0.2.1.tgz#62b04d7e36bcdcf7b72eb5b9592447dc38d6b06f"
+  integrity sha512-dn8LkrdnF1Lh1ZLKQcMBZtkIj0xpOQ+mIvw9WYZ5sV9WDVXlYHlArXd7PYkSV2LTPKSpOZi7jEk3csym1Nm0bQ==
+  dependencies:
+    storeon "^0.8.3"
+
 "@types/estree@0.0.39":
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
@@ -2676,6 +2683,11 @@ static-extend@^0.1.1:
   dependencies:
     define-property "^0.2.5"
     object-copy "^0.1.0"
+
+storeon@^0.8.3:
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/storeon/-/storeon-0.8.3.tgz#e3dfbf50421494a22853331990bdad019e587f74"
+  integrity sha512-AM/b7i8jIKevL73tKjGXSzllUOJcWCS5Wx9pec+Lgsf/fBUTa9twy7a2A5jCGXShcCFh5xBNs+F34l7zcXQ0sA==
 
 string-width@^1.0.1:
   version "1.0.2"

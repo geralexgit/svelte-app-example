@@ -1,4 +1,5 @@
 <script>
+  import { connect } from "../store.js";
   import isEmail from "validator/lib/isEmail";
 
   let login = "User";
@@ -21,12 +22,17 @@
     }
   ];
 
+  const [dispatch, count] = connect("count");
+
+  function increment() {
+    dispatch("inc");
+  }
+
   function loginHandler() {
     touched = true;
     let userData = { login, password, agree, selected: selected.id, sex };
     console.log(userData, touched, isValidEmail);
   }
-  
 </script>
 
 <style>
@@ -47,7 +53,6 @@
     <h1>Sign Up form</h1>
     <input placeholder="login" type="text" bind:value={login} />
     <input placeholder="password" type="password" bind:value={password} />
-
     <input placeholder="email" type="email" bind:value={email} />
     {#if !isValidEmail && touched}
       <span class="inputError">Email is invalid</span>
@@ -65,3 +70,5 @@
     <button type="submit">go!</button>
   </div>
 </form>
+<h1>The count is {$count}</h1>
+<button on:click="{increment}">+</button>
