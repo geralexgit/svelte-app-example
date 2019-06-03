@@ -2,13 +2,20 @@
   let login = "User";
   let password = "Password";
   let save = false;
-  let sex = "sex";
+  let sex = "female";
+  
+  let questions = [
+    { id: 1, text: `Where did you go to school?` },
+    { id: 2, text: `What is your mother's name?` },
+    {
+      id: 3,
+      text: `What is another personal fact that an attacker could easily find with Google?`
+    }
+  ];
 
+  let selected;
+  // let answer = "";
   const userData = { login, password, save, sex };
-
-  function loginHandler() {
-    console.log(userData);
-  }
 </script>
 
 <h1>Login form</h1>
@@ -17,9 +24,10 @@
   <input placeholder="password" type="password" bind:value={password} />
   <input type="checkbox" bind:checked={save} />
   Save: {save}
-  <select bind:value={sex}>
-    <option value="male">👦</option>
-    <option value="female">👧</option>
+  <select bind:value={selected}>
+    {#each questions as question}
+      <option value={question}> {question.text} </option>
+    {/each}
   </select>
   <button type="submit">go!</button>
 </form>
