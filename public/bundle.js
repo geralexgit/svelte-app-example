@@ -755,30 +755,31 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (36:2) {#if !isValidEmail && touched}
+    // (50:4) {#if !isValidEmail && touched}
     function create_if_block(ctx) {
-    	var p;
+    	var span;
 
     	return {
     		c: function create() {
-    			p = element("p");
-    			p.textContent = "Email is invalid";
-    			add_location(p, file, 36, 4, 989);
+    			span = element("span");
+    			span.textContent = "Email is invalid";
+    			span.className = "inputError svelte-1ol1brq";
+    			add_location(span, file, 50, 6, 1216);
     		},
 
     		m: function mount(target, anchor) {
-    			insert(target, p, anchor);
+    			insert(target, span, anchor);
     		},
 
     		d: function destroy(detaching) {
     			if (detaching) {
-    				detach(p);
+    				detach(span);
     			}
     		}
     	};
     }
 
-    // (44:4) {#each questions as question}
+    // (58:6) {#each questions as question}
     function create_each_block(ctx) {
     	var option, t_value = ctx.question.text, t, option_value_value;
 
@@ -788,7 +789,7 @@ var app = (function () {
     			t = text(t_value);
     			option.__value = option_value_value = ctx.question;
     			option.value = option.__value;
-    			add_location(option, file, 44, 6, 1243);
+    			add_location(option, file, 58, 8, 1511);
     		},
 
     		m: function mount(target, anchor) {
@@ -809,7 +810,7 @@ var app = (function () {
     }
 
     function create_fragment(ctx) {
-    	var h1, t1, form, input0, t2, input1, t3, input2, t4, t5, label, input3, t6, t7, t8, select, t9, button, dispose;
+    	var form, div, h1, t1, input0, t2, input1, t3, input2, t4, t5, label, input3, t6, t7, t8, select, t9, button, dispose;
 
     	var if_block = (!ctx.isValidEmail && ctx.touched) && create_if_block(ctx);
 
@@ -823,10 +824,11 @@ var app = (function () {
 
     	return {
     		c: function create() {
+    			form = element("form");
+    			div = element("div");
     			h1 = element("h1");
     			h1.textContent = "Login form";
     			t1 = space();
-    			form = element("form");
     			input0 = element("input");
     			t2 = space();
     			input1 = element("input");
@@ -837,7 +839,7 @@ var app = (function () {
     			t5 = space();
     			label = element("label");
     			input3 = element("input");
-    			t6 = text("\n    Save: ");
+    			t6 = text("\n      Save: ");
     			t7 = text(ctx.save);
     			t8 = space();
     			select = element("select");
@@ -849,26 +851,28 @@ var app = (function () {
     			t9 = space();
     			button = element("button");
     			button.textContent = "go!";
-    			add_location(h1, file, 29, 0, 684);
+    			add_location(h1, file, 44, 4, 948);
     			input0.placeholder = "login";
     			attr(input0, "type", "text");
-    			add_location(input0, file, 31, 2, 753);
+    			add_location(input0, file, 45, 4, 972);
     			input1.placeholder = "password";
     			attr(input1, "type", "password");
-    			add_location(input1, file, 32, 2, 816);
+    			add_location(input1, file, 46, 4, 1037);
     			input2.placeholder = "email";
     			attr(input2, "type", "email");
-    			add_location(input2, file, 34, 2, 890);
+    			add_location(input2, file, 48, 4, 1113);
     			input3.id = "save";
     			attr(input3, "type", "checkbox");
-    			add_location(input3, file, 39, 4, 1046);
+    			add_location(input3, file, 53, 6, 1304);
     			label.htmlFor = "save";
-    			add_location(label, file, 38, 2, 1023);
+    			add_location(label, file, 52, 4, 1279);
     			if (ctx.selected === void 0) add_render_callback(() => ctx.select_change_handler.call(select));
-    			add_location(select, file, 42, 2, 1132);
+    			add_location(select, file, 56, 4, 1396);
     			button.type = "submit";
-    			add_location(button, file, 47, 2, 1321);
-    			add_location(form, file, 30, 0, 704);
+    			add_location(button, file, 61, 4, 1595);
+    			div.className = "formWrapper svelte-1ol1brq";
+    			add_location(div, file, 43, 2, 918);
+    			add_location(form, file, 42, 0, 869);
 
     			dispose = [
     				listen(input0, "input", ctx.input0_input_handler),
@@ -886,35 +890,36 @@ var app = (function () {
     		},
 
     		m: function mount(target, anchor) {
-    			insert(target, h1, anchor);
-    			insert(target, t1, anchor);
     			insert(target, form, anchor);
-    			append(form, input0);
+    			append(form, div);
+    			append(div, h1);
+    			append(div, t1);
+    			append(div, input0);
 
     			input0.value = ctx.login;
 
-    			append(form, t2);
-    			append(form, input1);
+    			append(div, t2);
+    			append(div, input1);
 
     			input1.value = ctx.password;
 
-    			append(form, t3);
-    			append(form, input2);
+    			append(div, t3);
+    			append(div, input2);
 
     			input2.value = ctx.email;
 
-    			append(form, t4);
-    			if (if_block) if_block.m(form, null);
-    			append(form, t5);
-    			append(form, label);
+    			append(div, t4);
+    			if (if_block) if_block.m(div, null);
+    			append(div, t5);
+    			append(div, label);
     			append(label, input3);
 
     			input3.checked = ctx.save;
 
     			append(label, t6);
     			append(label, t7);
-    			append(form, t8);
-    			append(form, select);
+    			append(div, t8);
+    			append(div, select);
 
     			for (var i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].m(select, null);
@@ -922,8 +927,8 @@ var app = (function () {
 
     			select_option(select, ctx.selected);
 
-    			append(form, t9);
-    			append(form, button);
+    			append(div, t9);
+    			append(div, button);
     		},
 
     		p: function update(changed, ctx) {
@@ -935,7 +940,7 @@ var app = (function () {
     				if (!if_block) {
     					if_block = create_if_block(ctx);
     					if_block.c();
-    					if_block.m(form, t5);
+    					if_block.m(div, t5);
     				}
     			} else if (if_block) {
     				if_block.d(1);
@@ -977,8 +982,6 @@ var app = (function () {
 
     		d: function destroy(detaching) {
     			if (detaching) {
-    				detach(h1);
-    				detach(t1);
     				detach(form);
     			}
 

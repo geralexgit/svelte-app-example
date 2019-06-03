@@ -27,23 +27,38 @@
   }
 </script>
 
-<h1>Login form</h1>
-<form on:submit|preventDefault={loginHandler}>
-  <input placeholder="login" type="text" bind:value={login} />
-  <input placeholder="password" type="password" bind:value={password} />
+<style>
+  .inputError {
+    color: red;
+    font-size: 12px;
+  }
+  .formWrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+</style>
 
-  <input placeholder="email" type="email" bind:value={email} />
-  {#if !isValidEmail && touched}
-    <p>Email is invalid</p>
-  {/if}
-  <label for="save">
-    <input id="save" type="checkbox" bind:checked={save} />
-    Save: {save}
-  </label>
-  <select bind:value={selected} on:change={() => console.log(selected)}>
-    {#each questions as question}
-      <option value={question}> {question.text} </option>
-    {/each}
-  </select>
-  <button type="submit">go!</button>
+<form on:submit|preventDefault={loginHandler}>
+  <div class="formWrapper">
+    <h1>Login form</h1>
+    <input placeholder="login" type="text" bind:value={login} />
+    <input placeholder="password" type="password" bind:value={password} />
+
+    <input placeholder="email" type="email" bind:value={email} />
+    {#if !isValidEmail && touched}
+      <span class="inputError">Email is invalid</span>
+    {/if}
+    <label for="save">
+      <input id="save" type="checkbox" bind:checked={save} />
+      Save: {save}
+    </label>
+    <select bind:value={selected} on:change={() => console.log(selected)}>
+      {#each questions as question}
+        <option value={question}> {question.text} </option>
+      {/each}
+    </select>
+    <button type="submit">go!</button>
+  </div>
 </form>

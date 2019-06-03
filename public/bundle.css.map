@@ -1,8 +1,12 @@
 {
   "version": 3,
   "file": "bundle.css",
-  "sources": [],
-  "sourcesContent": [],
+  "sources": [
+    "../src/components/LoginForm.svelte"
+  ],
+  "sourcesContent": [
+    "<script>\n  import isEmail from \"validator/lib/isEmail\";\n\n  let login = \"User\";\n  let password = \"Password\";\n  let email = \"\";\n  let save = false;\n  let sex = \"female\";\n  let selected = {};\n  let touched = false;\n\n  $: isValidEmail = isEmail(email);\n\n  let questions = [\n    { id: 1, text: `Where did you go to school?` },\n    { id: 2, text: `What is your mother's name?` },\n    {\n      id: 3,\n      text: `What is another personal fact that an attacker could easily find with Google?`\n    }\n  ];\n\n  function loginHandler() {\n    touched = true;\n    let userData = { login, password, save, selected: selected.id, sex };\n    console.log(userData, touched, isValidEmail);\n  }\n</script>\n\n<style>\n  .inputError {\n    color: red;\n    font-size: 12px;\n  }\n  .formWrapper {\n    display: flex;\n    flex-direction: column;\n    max-width: 480px;\n    margin: 0 auto;\n  }\n</style>\n\n<form on:submit|preventDefault={loginHandler}>\n  <div class=\"formWrapper\">\n    <h1>Login form</h1>\n    <input placeholder=\"login\" type=\"text\" bind:value={login} />\n    <input placeholder=\"password\" type=\"password\" bind:value={password} />\n\n    <input placeholder=\"email\" type=\"email\" bind:value={email} />\n    {#if !isValidEmail && touched}\n      <span class=\"inputError\">Email is invalid</span>\n    {/if}\n    <label for=\"save\">\n      <input id=\"save\" type=\"checkbox\" bind:checked={save} />\n      Save: {save}\n    </label>\n    <select bind:value={selected} on:change={() => console.log(selected)}>\n      {#each questions as question}\n        <option value={question}> {question.text} </option>\n      {/each}\n    </select>\n    <button type=\"submit\">go!</button>\n  </div>\n</form>\n"
+  ],
   "names": [],
-  "mappings": ""
+  "mappings": "AA8BE,WAAW,eAAC,CAAC,AACX,KAAK,CAAE,GAAG,CACV,SAAS,CAAE,IAAI,AACjB,CAAC,AACD,YAAY,eAAC,CAAC,AACZ,OAAO,CAAE,IAAI,CACb,cAAc,CAAE,MAAM,CACtB,SAAS,CAAE,KAAK,CAChB,MAAM,CAAE,CAAC,CAAC,IAAI,AAChB,CAAC"
 }
