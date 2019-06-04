@@ -60,6 +60,9 @@ var app = (function () {
     function space() {
         return text(' ');
     }
+    function empty() {
+        return text('');
+    }
     function listen(node, event, handler, options) {
         node.addEventListener(event, handler, options);
         return () => node.removeEventListener(event, handler, options);
@@ -417,6 +420,82 @@ var app = (function () {
     var svelte = { createSvelteStore: createSvelteStore };
     var svelte_1 = svelte.createSvelteStore;
 
+    /**
+     * Create Redux DevTools module for Storeon.
+     *
+     * @param {object} options Redux DevTools option.
+     * @returns {devtools} Redux DevTools module
+     *
+     * @example
+     * const store = createStore([
+     *   process.env.NODE_ENV !== 'production' && require('storeon/devtools')()
+     * ])
+     *
+     * @name devtools
+     * @function
+     */
+    function devtools (options) {
+      function module (store) {
+        var extension =
+          window.__REDUX_DEVTOOLS_EXTENSION__ ||
+          window.top.__REDUX_DEVTOOLS_EXTENSION__;
+
+        if (!extension) {
+          if (process.env.NODE_ENV !== 'production') {
+            console.warn(
+              'Please install Redux devtools extension\n' +
+              'http://extension.remotedev.io/'
+            );
+          }
+          return
+        }
+
+        var ReduxTool = extension.connect();
+        store.on('@init', function () {
+          ReduxTool.subscribe(function (message) {
+            if (message.type === 'DISPATCH' && message.state) {
+              store.dispatch('UPDATE_FROM_DEVTOOLS', JSON.parse(message.state));
+            }
+          });
+          ReduxTool.init(store.get());
+        });
+
+        var prev = '';
+        store.on('@dispatch', function (state, data) {
+          var event = String(data[0]);
+          if (event !== 'UPDATE_FROM_DEVTOOLS' && prev !== 'UPDATE_FROM_DEVTOOLS') {
+            if (event[0] !== '@' && (!data[2] || data[2].length === 0)) {
+              throw new Error('Unknown Storeon event ' + event)
+            }
+            if (event !== '@changed' || Object.keys(data[1]).length) {
+              ReduxTool.send({ type: event, payload: data[1] }, state);
+            }
+          }
+          prev = event;
+        });
+
+        store.on('UPDATE_FROM_DEVTOOLS', function (state, data) {
+          var newState = {};
+          var key;
+          for (key in state) {
+            newState[key] = undefined;
+          }
+          for (key in data) {
+            newState[key] = data[key];
+          }
+          return newState
+        });
+      }
+
+      if (options && options.on && options.dispatch && options.get) {
+        return module(options)
+      } else {
+        return module
+      }
+    }
+
+    var devtools_1 = devtools;
+
     let counter = store => {
       store.on('@init', () => ({
         count: 0
@@ -428,7 +507,21 @@ var app = (function () {
       }));
     };
 
-    const connect = svelte_1([counter]);
+    let currentUser = store => {
+      store.on('@init', () => ({
+        currentUser: {}
+      }));
+      store.on('user/auth', ({
+        currentUser
+      }, user) => {
+        return {
+          currentUser: { ...user
+          }
+        };
+      });
+    };
+
+    const connect = svelte_1([counter, currentUser, devtools_1]);
 
     function unwrapExports (x) {
     	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
@@ -917,8 +1010,8 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (57:4) {#if !isValidEmail && touched}
-    function create_if_block(ctx) {
+    // (53:4) {#if !isValidEmail && touched}
+    function create_if_block_1(ctx) {
     	var span;
 
     	return {
@@ -926,7 +1019,7 @@ var app = (function () {
     			span = element("span");
     			span.textContent = "Email is invalid";
     			span.className = "inputError svelte-1ol1brq";
-    			add_location(span, file, 57, 6, 1377);
+    			add_location(span, file, 53, 6, 1347);
     		},
 
     		m: function mount(target, anchor) {
@@ -941,7 +1034,7 @@ var app = (function () {
     	};
     }
 
-    // (65:6) {#each questions as question}
+    // (61:6) {#each questions as question}
     function create_each_block(ctx) {
     	var option, t_value = ctx.question.text, t, option_value_value;
 
@@ -951,7 +1044,7 @@ var app = (function () {
     			t = text(t_value);
     			option.__value = option_value_value = ctx.question;
     			option.value = option.__value;
-    			add_location(option, file, 65, 8, 1694);
+    			add_location(option, file, 61, 8, 1624);
     		},
 
     		m: function mount(target, anchor) {
@@ -971,10 +1064,42 @@ var app = (function () {
     	};
     }
 
-    function create_fragment(ctx) {
-    	var form, div, h10, t1, input0, t2, input1, t3, input2, t4, t5, label, input3, t6, t7, select, t8, input4, t9, button0, t11, h11, t12, t13, t14, button1, dispose;
+    // (69:0) {#if $currentUser}
+    function create_if_block(ctx) {
+    	var h1, t0, t1_value = ctx.$currentUser.login, t1;
 
-    	var if_block = (!ctx.isValidEmail && ctx.touched) && create_if_block(ctx);
+    	return {
+    		c: function create() {
+    			h1 = element("h1");
+    			t0 = text("Current user ");
+    			t1 = text(t1_value);
+    			add_location(h1, file, 69, 2, 1853);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, h1, anchor);
+    			append(h1, t0);
+    			append(h1, t1);
+    		},
+
+    		p: function update(changed, ctx) {
+    			if ((changed.$currentUser) && t1_value !== (t1_value = ctx.$currentUser.login)) {
+    				set_data(t1, t1_value);
+    			}
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(h1);
+    			}
+    		}
+    	};
+    }
+
+    function create_fragment(ctx) {
+    	var form, div, h1, t1, input0, t2, input1, t3, input2, t4, t5, label, input3, t6, t7, select, t8, input4, t9, button, t11, if_block1_anchor, dispose;
+
+    	var if_block0 = (!ctx.isValidEmail && ctx.touched) && create_if_block_1(ctx);
 
     	var each_value = ctx.questions;
 
@@ -984,12 +1109,14 @@ var app = (function () {
     		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
     	}
 
+    	var if_block1 = (ctx.$currentUser) && create_if_block(ctx);
+
     	return {
     		c: function create() {
     			form = element("form");
     			div = element("div");
-    			h10 = element("h1");
-    			h10.textContent = "Sign Up form";
+    			h1 = element("h1");
+    			h1.textContent = "Sign Up form";
     			t1 = space();
     			input0 = element("input");
     			t2 = space();
@@ -997,7 +1124,7 @@ var app = (function () {
     			t3 = space();
     			input2 = element("input");
     			t4 = space();
-    			if (if_block) if_block.c();
+    			if (if_block0) if_block0.c();
     			t5 = space();
     			label = element("label");
     			input3 = element("input");
@@ -1012,42 +1139,36 @@ var app = (function () {
     			t8 = space();
     			input4 = element("input");
     			t9 = space();
-    			button0 = element("button");
-    			button0.textContent = "go!";
+    			button = element("button");
+    			button.textContent = "go!";
     			t11 = space();
-    			h11 = element("h1");
-    			t12 = text("The count is ");
-    			t13 = text(ctx.$count);
-    			t14 = space();
-    			button1 = element("button");
-    			button1.textContent = "+";
-    			add_location(h10, file, 52, 4, 1108);
+    			if (if_block1) if_block1.c();
+    			if_block1_anchor = empty();
+    			add_location(h1, file, 48, 4, 1078);
     			input0.placeholder = "login";
     			attr(input0, "type", "text");
-    			add_location(input0, file, 53, 4, 1134);
+    			add_location(input0, file, 49, 4, 1104);
     			input1.placeholder = "password";
     			attr(input1, "type", "password");
-    			add_location(input1, file, 54, 4, 1199);
+    			add_location(input1, file, 50, 4, 1169);
     			input2.placeholder = "email";
     			attr(input2, "type", "email");
-    			add_location(input2, file, 55, 4, 1274);
+    			add_location(input2, file, 51, 4, 1244);
     			input3.id = "agree";
     			attr(input3, "type", "checkbox");
-    			add_location(input3, file, 60, 6, 1466);
+    			add_location(input3, file, 56, 6, 1436);
     			label.htmlFor = "agree";
-    			add_location(label, file, 59, 4, 1440);
+    			add_location(label, file, 55, 4, 1410);
     			if (ctx.selected === void 0) add_render_callback(() => ctx.select_change_handler.call(select));
-    			add_location(select, file, 63, 4, 1579);
+    			add_location(select, file, 59, 4, 1549);
     			input4.placeholder = "Your answer";
     			attr(input4, "type", "text");
-    			add_location(input4, file, 68, 4, 1778);
-    			button0.type = "submit";
-    			add_location(button0, file, 69, 4, 1850);
+    			add_location(input4, file, 64, 4, 1708);
+    			button.type = "submit";
+    			add_location(button, file, 65, 4, 1780);
     			div.className = "formWrapper svelte-1ol1brq";
-    			add_location(div, file, 51, 2, 1078);
-    			add_location(form, file, 50, 0, 1029);
-    			add_location(h11, file, 72, 0, 1902);
-    			add_location(button1, file, 73, 0, 1933);
+    			add_location(div, file, 47, 2, 1048);
+    			add_location(form, file, 46, 0, 999);
 
     			dispose = [
     				listen(input0, "input", ctx.input0_input_handler),
@@ -1055,10 +1176,8 @@ var app = (function () {
     				listen(input2, "input", ctx.input2_input_handler),
     				listen(input3, "change", ctx.input3_change_handler),
     				listen(select, "change", ctx.select_change_handler),
-    				listen(select, "change", ctx.change_handler),
     				listen(input4, "input", ctx.input4_input_handler),
-    				listen(form, "submit", prevent_default(ctx.loginHandler)),
-    				listen(button1, "click", ctx.increment)
+    				listen(form, "submit", prevent_default(ctx.loginHandler))
     			];
     		},
 
@@ -1069,7 +1188,7 @@ var app = (function () {
     		m: function mount(target, anchor) {
     			insert(target, form, anchor);
     			append(form, div);
-    			append(div, h10);
+    			append(div, h1);
     			append(div, t1);
     			append(div, input0);
 
@@ -1086,7 +1205,7 @@ var app = (function () {
     			input2.value = ctx.email;
 
     			append(div, t4);
-    			if (if_block) if_block.m(div, null);
+    			if (if_block0) if_block0.m(div, null);
     			append(div, t5);
     			append(div, label);
     			append(label, input3);
@@ -1109,13 +1228,10 @@ var app = (function () {
     			input4.value = ctx.answer;
 
     			append(div, t9);
-    			append(div, button0);
+    			append(div, button);
     			insert(target, t11, anchor);
-    			insert(target, h11, anchor);
-    			append(h11, t12);
-    			append(h11, t13);
-    			insert(target, t14, anchor);
-    			insert(target, button1, anchor);
+    			if (if_block1) if_block1.m(target, anchor);
+    			insert(target, if_block1_anchor, anchor);
     		},
 
     		p: function update(changed, ctx) {
@@ -1124,14 +1240,14 @@ var app = (function () {
     			if (changed.email) input2.value = ctx.email;
 
     			if (!ctx.isValidEmail && ctx.touched) {
-    				if (!if_block) {
-    					if_block = create_if_block(ctx);
-    					if_block.c();
-    					if_block.m(div, t5);
+    				if (!if_block0) {
+    					if_block0 = create_if_block_1(ctx);
+    					if_block0.c();
+    					if_block0.m(div, t5);
     				}
-    			} else if (if_block) {
-    				if_block.d(1);
-    				if_block = null;
+    			} else if (if_block0) {
+    				if_block0.d(1);
+    				if_block0 = null;
     			}
 
     			if (changed.agree) input3.checked = ctx.agree;
@@ -1160,8 +1276,17 @@ var app = (function () {
     			if (changed.selected) select_option(select, ctx.selected);
     			if (changed.answer && (input4.value !== ctx.answer)) input4.value = ctx.answer;
 
-    			if (changed.$count) {
-    				set_data(t13, ctx.$count);
+    			if (ctx.$currentUser) {
+    				if (if_block1) {
+    					if_block1.p(changed, ctx);
+    				} else {
+    					if_block1 = create_if_block(ctx);
+    					if_block1.c();
+    					if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
+    				}
+    			} else if (if_block1) {
+    				if_block1.d(1);
+    				if_block1 = null;
     			}
     		},
 
@@ -1173,15 +1298,18 @@ var app = (function () {
     				detach(form);
     			}
 
-    			if (if_block) if_block.d();
+    			if (if_block0) if_block0.d();
 
     			destroy_each(each_blocks, detaching);
 
     			if (detaching) {
     				detach(t11);
-    				detach(h11);
-    				detach(t14);
-    				detach(button1);
+    			}
+
+    			if (if_block1) if_block1.d(detaching);
+
+    			if (detaching) {
+    				detach(if_block1_anchor);
     			}
 
     			run_all(dispose);
@@ -1189,10 +1317,8 @@ var app = (function () {
     	};
     }
 
-    let sex = "female";
-
     function instance($$self, $$props, $$invalidate) {
-    	let $count;
+    	let $currentUser;
 
     	
 
@@ -1213,16 +1339,13 @@ var app = (function () {
         }
       ];
 
-      const [dispatch, count] = connect("count"); validate_store(count, 'count'); subscribe($$self, count, $$value => { $count = $$value; $$invalidate('$count', $count); });
-
-      function increment() {
-        dispatch("inc");
-      }
+      // const [dispatch, count] = connect("count");
+      const [dispatch, currentUser] = connect("currentUser"); validate_store(currentUser, 'currentUser'); subscribe($$self, currentUser, $$value => { $currentUser = $$value; $$invalidate('$currentUser', $currentUser); });
 
       function loginHandler() {
         $$invalidate('touched', touched = true);
-        let userData = { login, password, agree, selected: selected.id, sex };
-        console.log(userData, touched, isValidEmail);
+        let userData = { login, password, agree, selected: selected.id };
+        dispatch("user/auth", userData);
       }
 
     	function input0_input_handler() {
@@ -1251,10 +1374,6 @@ var app = (function () {
     		$$invalidate('questions', questions);
     	}
 
-    	function change_handler() {
-    		return console.log(selected);
-    	}
-
     	function input4_input_handler() {
     		answer = this.value;
     		$$invalidate('answer', answer);
@@ -1275,18 +1394,15 @@ var app = (function () {
     		answer,
     		touched,
     		questions,
-    		count,
-    		increment,
+    		currentUser,
     		loginHandler,
     		isValidEmail,
-    		console,
-    		$count,
+    		$currentUser,
     		input0_input_handler,
     		input1_input_handler,
     		input2_input_handler,
     		input3_change_handler,
     		select_change_handler,
-    		change_handler,
     		input4_input_handler
     	};
     }

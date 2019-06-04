@@ -6,7 +6,6 @@
   let password = "Password";
   let email = "";
   let agree = false;
-  let sex = "female";
   let selected = {};
   let answer = "";
   let touched = false;
@@ -22,16 +21,13 @@
     }
   ];
 
-  const [dispatch, count] = connect("count");
-
-  function increment() {
-    dispatch("inc");
-  }
+  // const [dispatch, count] = connect("count");
+  const [dispatch, currentUser] = connect("currentUser");
 
   function loginHandler() {
     touched = true;
-    let userData = { login, password, agree, selected: selected.id, sex };
-    console.log(userData, touched, isValidEmail);
+    let userData = { login, password, agree, selected: selected.id };
+    dispatch("user/auth", userData);
   }
 </script>
 
@@ -61,7 +57,7 @@
       <input id="agree" type="checkbox" bind:checked={agree} />
       Agree with terms and conditions
     </label>
-    <select bind:value={selected} on:change={() => console.log(selected)}>
+    <select bind:value={selected}>
       {#each questions as question}
         <option value={question}> {question.text} </option>
       {/each}
@@ -70,5 +66,6 @@
     <button type="submit">go!</button>
   </div>
 </form>
-<h1>The count is {$count}</h1>
-<button on:click="{increment}">+</button>
+{#if $currentUser}
+  <h1>Current user {$currentUser.login}</h1>
+{/if}
